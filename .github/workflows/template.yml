@@ -54,6 +54,7 @@ jobs:
         id: testRunner
         with:
           testMode: all
+          unityVersion: 6000.2.10f1
 
       - uses: actions/upload-artifact@v4
         with:
@@ -95,7 +96,7 @@ jobs:
             Library-build-
             Library-
 
-      - uses: game-ci/unity-builder@v3
+      - uses: game-ci/unity-builder@v4
         with:
           targetPlatform: WebGL
 
