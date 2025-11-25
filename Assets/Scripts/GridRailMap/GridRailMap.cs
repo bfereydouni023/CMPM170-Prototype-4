@@ -65,6 +65,16 @@ public class GridRailMap : MonoBehaviour
         }
     }
 
+    Color GetColorForDir(Vector2Int dir)
+    {
+        if (dir == Vector2Int.up) return Color.blue;    // North
+        if (dir == Vector2Int.right) return new Color(1f, 0.5f, 0f); // East = orange
+        if (dir == Vector2Int.down) return Color.red;     // South
+        if (dir == Vector2Int.left) return Color.green;   // West
+
+        return Color.white;
+    }
+
     public bool InBounds(Vector2Int cell)
     {
         return cell.x >= 0 && cell.x < width &&
@@ -325,18 +335,6 @@ public class GridRailMap : MonoBehaviour
 
         var col = go.GetComponent<Collider>();
         if (col) UnityEditor.Undo.DestroyObjectImmediate(col);
-    }
-
-
-
-    Color GetColorForDir(Vector2Int dir)
-    {
-        if (dir == Vector2Int.up) return Color.blue;    // North
-        if (dir == Vector2Int.right) return new Color(1f, 0.5f, 0f); // East = orange
-        if (dir == Vector2Int.down) return Color.red;     // South
-        if (dir == Vector2Int.left) return Color.green;   // West
-
-        return Color.white;
     }
 
 #endif
