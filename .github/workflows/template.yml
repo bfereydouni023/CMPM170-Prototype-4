@@ -66,12 +66,18 @@ jobs:
           name: Build
           path: build
 
+      - name: Configure Pages
+        uses: actions/configure-pages@v4
+
       - name: Display structure of root files
         run: ls -R
         working-directory: build/WebGL
 
-      - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v4
         with:
-          branch: gh-pages
-          folder: build/WebGL
+          path: build/WebGL
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
