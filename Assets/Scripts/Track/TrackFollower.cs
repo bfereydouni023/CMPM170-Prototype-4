@@ -2,429 +2,778 @@
 
 public class TrackFollower : MonoBehaviour
 {
-    [Header("Track")]
-    public TrackBuilder track;      // drag your TrackBuilderRoot here
+    [Header("Track Reference")]
+    public TrackBuilder track;   // assign in inspector
 
     [Header("Movement")]
-    public float maxSpeed = 6f;
-    public float acceleration = 10f;
-    public float deceleration = 12f;
-    public float startingSpeed = 2f;
-    public float rotateSpeed = 360f;
+    public float moveSpeed = 2f;     // speed when holding W
 
-    [Header("Input Friction")]
-    [Tooltip("Extra deceleration when holding W plus A/D (trying to move diagonally into the wall).")]
-    public float strafeFrictionDecel = 20f;   // tweak to taste (bigger = stronger friction)
+    [Header("Rotation")]
+    public float rotateSpeed = 720f; // deg/sec for smoothing
 
     [Header("Corners")]
-    [Tooltip("Angle (in degrees) above which we treat a change in direction as a corner.")]
+    [Tooltip("Angle in degrees above which a change in direction counts as a 'corner'.")]
     public float cornerAngleThreshold = 5f;
 
-    float currentSpeed = 0f;
-
-    // segment i is from nodes[i] -> nodes[i+1]
-    int segmentIndex = 0;
-    float segmentLength = 0f;
-    float distanceOnSegment = 0f; // 0..segmentLength
-
     Transform[] nodes;
+    int segmentIndex = 0;            // node[i] → node[i+1]
+    float segmentLength;
+    float distanceOnSegment = 0f;
 
-    // turning visuals (like GridMover)
+    // +1 = along nodes[0]→nodes[1]→..., -1 = backwards
+    int travelDirection = 1;
+
     Quaternion targetRotation;
-    bool isRotating = false;
+    bool rotating = false;
 
-    // corner state (only used when we stop at an unchosen corner)
+    // ---- corner state ----
     bool atCorner = false;
-    int cornerIncomingIndex = -1;
-    int cornerOutgoingIndex = -1;
-    int cornerTurnSign = 0; // -1 = left, +1 = right
+    int cornerNodeIndex = -1;
+    int upcomingSegmentIndex = -1;
+    int cornerTurnSign = 0;  // -1 = left, +1 = right (relative to player facing)
 
-    // direction along the track: +1 forward, -1 backwards
-    int travelSign = 1;
+    // are we on the main spine or a branch path?
+    bool IsOnMainTrack => nodes == track.nodes;
+
+    // choices at a junction when coming *from* a branch
+    enum JunctionChoice
+    {
+        None,
+        MainForward,
+        MainBackward,
+        Branch   // generic branch (could be any of the attached / reconnect branches)
+    }
 
     void Start()
     {
         if (track == null || track.nodes == null || track.nodes.Length < 2)
         {
-            Debug.LogError("TrackFollower: Track or nodes not set up correctly.");
+            Debug.LogError("TrackFollower: Track not set or invalid.");
             enabled = false;
             return;
         }
 
-        // start on the main spine
         nodes = track.nodes;
-
         segmentIndex = 0;
-        UpdateSegmentData();
+        distanceOnSegment = 0f;
 
-        transform.position = nodes[0].position;
-        targetRotation = Quaternion.LookRotation(GetCurrentDirection(), Vector3.up);
+        UpdateSegmentData();
+        ApplyPositionOnSegment();
+        SetTargetRotation();
         transform.rotation = targetRotation;
+        rotating = false;
     }
 
     void Update()
     {
-        HandleFlipInput();          // S = flip 180 (still works, but only on current path)
-        HandleMoveInput();          // W = move
-        HandleCornerInputIfNeeded();
-        ApplyMovement();
-        RotateToTarget();
+        HandleFlipInput();       // S to turn around (when not at a corner)
+        HandleCornerDecision();  // A/D when *at* a corner
+        HandleMoveInput();       // W to move along current path
+        RotateToTarget();        // smooth turning
     }
 
-    // ---------------- S flips you 180° on current path ----------------
+    // --------- S = flip 180° (only when not at a corner) ----------
 
     void HandleFlipInput()
     {
-        if (!Input.GetKeyDown(KeyCode.S))
-            return;
+        if (atCorner) return; // keep corner logic simple for now
 
-        if (atCorner)
+        if (Input.GetKeyDown(KeyCode.S))
         {
-            // At a corner, flip back along the segment we came from.
-            if (cornerIncomingIndex >= 0 && cornerIncomingIndex < nodes.Length - 1)
-            {
-                atCorner = false;
-                segmentIndex = cornerIncomingIndex;
-
-                UpdateSegmentData();
-                distanceOnSegment = segmentLength;
-
-                travelSign = -1;
-
-                Vector3 dir = -GetCurrentDirection();
-                targetRotation = Quaternion.LookRotation(dir, Vector3.up);
-                isRotating = true;
-            }
-        }
-        else
-        {
-            // Not at a corner: flip direction along the current segment.
-            travelSign *= -1;
-
-            Vector3 dir = (travelSign > 0)
-                ? GetCurrentDirection()
-                : -GetCurrentDirection();
-
-            targetRotation = Quaternion.LookRotation(dir, Vector3.up);
-            isRotating = true;
+            travelDirection *= -1;
+            SetTargetRotation();
+            rotating = true;
         }
     }
 
-    // ---------------- W accelerates/decelerates ----------------
+    // --------- A / D = choose to turn at a main-track corner ----------
+
+    void HandleCornerDecision()
+    {
+        if (!atCorner) return;
+
+        bool left = Input.GetKeyDown(KeyCode.A);
+        bool right = Input.GetKeyDown(KeyCode.D);
+
+        if (cornerTurnSign == 0)
+        {
+            atCorner = false;
+            return;
+        }
+
+        bool correctLeft = left && cornerTurnSign == -1;
+        bool correctRight = right && cornerTurnSign == +1;
+
+        if (!(correctLeft || correctRight))
+            return; // wrong key or no key yet
+
+        // Commit to the next segment on this path
+        segmentIndex = upcomingSegmentIndex;
+        UpdateSegmentData();
+
+        distanceOnSegment = (travelDirection > 0) ? 0f : segmentLength;
+        ApplyPositionOnSegment();
+
+        SetTargetRotation();
+        rotating = true;
+
+        atCorner = false;
+        cornerNodeIndex = -1;
+        upcomingSegmentIndex = -1;
+        cornerTurnSign = 0;
+    }
+
+    // --------- W = move in current travelDirection ----------
 
     void HandleMoveInput()
     {
-        // If we're sitting at a corner and haven’t committed a turn yet,
-        // ignore W for movement – you need to pick a direction first (A/D or S flip).
+        // Don't move while waiting for a corner decision
         if (atCorner)
         {
-            currentSpeed = 0f;
+            ApplyPositionOnSegment();
             return;
         }
 
-        bool forwardHeld = Input.GetKey(KeyCode.W);
-        bool leftHeld = Input.GetKey(KeyCode.A);
-        bool rightHeld = Input.GetKey(KeyCode.D);
-
-        // ---- FRICTION: holding W + A/D slows you down toward a stop ----
-        bool frictionActive = forwardHeld && (leftHeld || rightHeld);
-        if (frictionActive)
+        // Only move while W is held
+        if (!Input.GetKey(KeyCode.W))
         {
-            // pull speed toward 0 faster than normal decel
-            currentSpeed = Mathf.MoveTowards(currentSpeed, 0f, strafeFrictionDecel * Time.deltaTime);
-            return;    // skip normal accel/decel this frame
+            ApplyPositionOnSegment();
+            return;
         }
 
-        // ---- normal W-only movement (your previous logic) ----
-        float desiredSpeed = forwardHeld ? maxSpeed : 0f;
+        float move = moveSpeed * Time.deltaTime * travelDirection;
+        distanceOnSegment += move;
 
-        if (forwardHeld && Mathf.Abs(currentSpeed) < startingSpeed)
-            currentSpeed = startingSpeed;
+        if (travelDirection > 0)
+        {
+            // moving forward along indices: 0→1→2→...
+            while (distanceOnSegment >= segmentLength)
+            {
+                distanceOnSegment -= segmentLength;
 
-        float rate;
-        if (Mathf.Approximately(desiredSpeed, 0f))
-            rate = deceleration;
-        else if (Mathf.Approximately(currentSpeed, 0f))
-            rate = acceleration;
+                // Node we just reached
+                Transform cornerNode = nodes[segmentIndex + 1];
+
+                // 1) First, see if we want to switch onto a BRANCH at this node (main track only)
+                // 1) Treat this as a full junction (main + any branches/loops)
+                if (IsOnMainTrack)
+                {
+                    Vector3 incoming = cornerNode.position - nodes[segmentIndex].position;
+
+                    if (ResolveJunctionAtNode(cornerNode, incoming))
+                    {
+                        // Junction resolver may have put us on main or a branch.
+                        ApplyPositionOnSegment();
+                        SetTargetRotation();
+                        rotating = true;
+                        return;
+                    }
+                }
+
+                // 2) If no branch chosen, handle a CORNER on the current path
+                if (segmentIndex < nodes.Length - 2)
+                {
+                    if (TryEnterCornerForward())
+                    {
+                        // snapped to corner and waiting for A/D, stop this frame
+                        return;
+                    }
+
+                    // otherwise, just continue on this path
+                    segmentIndex++;
+                    UpdateSegmentData();
+                }
+                else
+                {
+                    // end of path
+                    distanceOnSegment = segmentLength;
+
+                    // If this is a BRANCH, only try to merge if player is actually steering (A/D)
+                    if (!IsOnMainTrack)
+                    {
+                        bool leftHeld = Input.GetKey(KeyCode.A);
+                        bool rightHeld = Input.GetKey(KeyCode.D);
+
+                        // no steering input → just stop at the end of the branch
+                        if (!leftHeld && !rightHeld)
+                            break;
+
+                        Transform branchEnd = nodes[segmentIndex + 1]; // last node of this path
+                        Vector3 incoming = branchEnd.position - nodes[segmentIndex].position;
+
+                        // 1) Is there a main-track junction node exactly here?
+                        Transform junction = FindJunctionNodeAtPosition(branchEnd.position, 0.05f);
+                        if (junction != null)
+                        {
+                            if (ResolveJunctionAtNode(junction, incoming))
+                            {
+                                ApplyPositionOnSegment();
+                                SetTargetRotation();
+                                rotating = true;
+                                return;
+                            }
+                        }
+
+                        // 2) Otherwise, fall back to the "attach mid-segment" helper
+                        if (TryAttachBranchEndToMain(branchEnd.position, incoming))
+                        {
+                            ApplyPositionOnSegment();
+                            SetTargetRotation();
+                            rotating = true;
+                            return;
+                        }
+                    }
+
+                    // no merge possible → just stop at the end
+                    break;
+                }
+            }
+        }
         else
-            rate = (Mathf.Sign(desiredSpeed) == Mathf.Sign(currentSpeed)) ? acceleration : deceleration;
+        {
+            // moving backward along indices: ...→2→1→0
+            while (distanceOnSegment < 0f)
+            {
+                // we just reached node[segmentIndex]
+                if (segmentIndex > 0)
+                {
+                    // 1) Check for branch when moving "backwards" along main track
+                    if (IsOnMainTrack)
+                    {
+                        Transform cornerNode = nodes[segmentIndex];
+                        Vector3 incoming = cornerNode.position - nodes[segmentIndex + 1].position;
 
-        currentSpeed = Mathf.MoveTowards(currentSpeed, desiredSpeed, rate * Time.deltaTime);
+                        // snap to junction before switching
+                        distanceOnSegment = 0f;
+
+                        if (TrySwitchToBranchAtNode(cornerNode, incoming))
+                        {
+                            ApplyPositionOnSegment();
+                            return;
+                        }
+                    }
+
+                    // 2) Corner on the current path
+                    if (TryEnterCornerBackward())
+                    {
+                        return; // snapped to corner, waiting for A/D
+                    }
+
+                    segmentIndex--;
+                    UpdateSegmentData();
+                    distanceOnSegment += segmentLength;
+                }
+                else
+                {
+                    // we're trying to go past the *start* of this path.
+                    if (!IsOnMainTrack)
+                    {
+                        // arrived at the junction from a branch: treat as a junction
+                        Transform junction = nodes[0];
+
+                        Vector3 incoming;
+                        if (nodes.Length > 1)
+                            incoming = junction.position - nodes[1].position;
+                        else
+                            incoming = transform.forward;
+
+                        if (ResolveJunctionAtNode(junction, incoming))
+                        {
+                            return;
+                        }
+                    }
+
+                    // start of main path: just clamp
+                    distanceOnSegment = 0f;
+                    break;
+                }
+            }
+        }
+
+        ApplyPositionOnSegment();
+        SetTargetRotation();
+        rotating = true;
     }
 
-    // ----------- If we’re already stopped at a corner, wait for A/D -----------
+    // ==========================================================
+    // BRANCH / LOOP SELECTION (current node on MAIN → branch / loop)
+    // ==========================================================
 
-    void HandleCornerInputIfNeeded()
+    bool TrySwitchToBranchAtNode(Transform cornerNode, Vector3 incoming)
     {
-        if (!atCorner)
-            return;
+        bool leftHeld = Input.GetKey(KeyCode.A);
+        bool rightHeld = Input.GetKey(KeyCode.D);
+
+        if (!leftHeld && !rightHeld)
+            return false; // player isn't asking to turn here
+
+        // use the actual movement direction as the "from" direction
+        Vector3 facing = incoming;
+        facing.y = 0f;
+        if (facing.sqrMagnitude < 0.0001f)
+            facing = transform.forward;
+        facing.Normalize();
+
+        Transform[] chosenBranch = null;
+
+        // helper: pick this branch array if A/D matches its first direction
+        void ConsiderBranch(Transform[] arr)
+        {
+            if (chosenBranch != null || arr == null || arr.Length == 0) return;
+
+            // arr[0] MUST be the first node *away from* the junction
+            Vector3 d = (arr[0].position - cornerNode.position);
+            d.y = 0f;
+            if (d.sqrMagnitude < 0.0001f) return;   // guard against zero-length
+
+            d.Normalize();
+            int s = GetTurnSign(facing, d); // -1 left, +1 right
+
+            if ((leftHeld && s == -1) || (rightHeld && s == +1))
+                chosenBranch = arr;
+        }
+
+        // 1) Normal branches directly attached to this node
+        TrackBranch brHere = cornerNode.GetComponent<TrackBranch>();
+        if (brHere != null)
+        {
+            ConsiderBranch(brHere.branch1Nodes);
+            ConsiderBranch(brHere.branch2Nodes);
+        }
+
+        // 2) Extra branches whose *end* is at this node (reconnect loops)
+        var extra = FindAdditionalBranchesAtNode(cornerNode);
+        foreach (var arr in extra)
+            ConsiderBranch(arr);
+
+        if (chosenBranch == null)
+            return false; // A/D didn't match any branch direction
+
+        // Build a new path: junction node + branch nodes
+        Transform[] newNodes = new Transform[chosenBranch.Length + 1];
+        newNodes[0] = cornerNode;
+        for (int i = 0; i < chosenBranch.Length; i++)
+            newNodes[i + 1] = chosenBranch[i];
+
+        nodes = newNodes;
+        segmentIndex = 0;
+        travelDirection = 1; // moving outward along this branch
+        distanceOnSegment = 0f;
+
+        // reset any old corner state
+        atCorner = false;
+        cornerNodeIndex = -1;
+        upcomingSegmentIndex = -1;
+        cornerTurnSign = 0;
+
+        UpdateSegmentData();
+        SetTargetRotation();
+        rotating = true;
+
+        return true;
+    }
+
+    // ==========================================================
+    // Branch arrays that END at this node (for reconnect / loops)
+    // ==========================================================
+
+    System.Collections.Generic.List<Transform[]> FindAdditionalBranchesAtNode(Transform cornerNode)
+    {
+        var list = new System.Collections.Generic.List<Transform[]>();
+        if (track == null) return list;
+
+        var allBranches = track.GetComponentsInChildren<TrackBranch>();
+        float eps = 0.05f;
+        float epsSqr = eps * eps;
+
+        foreach (var br in allBranches)
+        {
+            if (br == null) continue;
+
+            void CheckArray(Transform[] arr)
+            {
+                if (arr == null || arr.Length < 2) return; // need at least 2 nodes
+
+                // skip the "normal" branch attached at this node – handled separately
+                if (br.transform == cornerNode) return;
+
+                Transform last = arr[arr.Length - 1];
+                if (last == null) return;
+
+                // does this branch END on this node?
+                if ((last.position - cornerNode.position).sqrMagnitude <= epsSqr)
+                {
+                    // Build a path *away from* the corner:
+                    // [ second-to-last, ..., first ]
+                    int lenInterior = arr.Length - 1;
+                    Transform[] path = new Transform[lenInterior];
+
+                    for (int i = 0; i < lenInterior; i++)
+                    {
+                        // arr[lenInterior-1] is second-to-last
+                        path[i] = arr[lenInterior - 1 - i];
+                    }
+
+                    // OPTIONAL: if the branch root (br.transform) is ALSO on the main track,
+                    // append it so the path truly rejoins the main at the other end.
+                    Transform[] main = track.nodes;
+                    int rootIndex = System.Array.IndexOf(main, br.transform);
+                    if (rootIndex >= 0)
+                    {
+                        // extend path by one slot, last element = branch root (original junction)
+                        Transform[] extended = new Transform[lenInterior + 1];
+                        for (int i = 0; i < lenInterior; i++)
+                            extended[i] = path[i];
+                        extended[lenInterior] = br.transform;
+
+                        path = extended;
+                    }
+
+                    // path[0] is now the first node away from the reconnect corner;
+                    // path[last] is the original junction node if it sits on the main track.
+                    list.Add(path);
+                }
+            }
+
+            CheckArray(br.branch1Nodes);
+            CheckArray(br.branch2Nodes);
+        }
+
+        return list;
+    }
+
+    // ==========================================================
+    // Generic junction resolver (used from branch starts & ends)
+    // ==========================================================
+
+    bool ResolveJunctionAtNode(Transform junction, Vector3 incoming)
+    {
+        if (junction == null) return false;
+
+        // normalise incoming
+        incoming.y = 0f;
+        if (incoming.sqrMagnitude < 0.0001f)
+            incoming = transform.forward;
+        incoming.Normalize();
+
+        Transform[] mainNodes = track.nodes;
+        int mainIndex = System.Array.IndexOf(mainNodes, junction);
+
+        TrackBranch br = junction.GetComponent<TrackBranch>();
+
+        // ----- collect *all* branch-like paths that start or end here -----
+        var branchCandidates = new System.Collections.Generic.List<Transform[]>();
+
+        // direct branches from a TrackBranch on this node
+        if (br != null)
+        {
+            if (br.branch1Nodes != null && br.branch1Nodes.Length > 0)
+                branchCandidates.Add(br.branch1Nodes);
+
+            if (br.branch2Nodes != null && br.branch2Nodes.Length > 0)
+                branchCandidates.Add(br.branch2Nodes);
+        }
+
+        // reconnect / loop branches whose end sits on this node
+        var extraPaths = FindAdditionalBranchesAtNode(junction);
+        foreach (var arr in extraPaths)
+        {
+            if (arr != null && arr.Length > 0)
+                branchCandidates.Add(arr);
+        }
 
         bool leftHeld = Input.GetKey(KeyCode.A);
         bool rightHeld = Input.GetKey(KeyCode.D);
 
-        bool correctLeft = leftHeld && cornerTurnSign == -1;
-        bool correctRight = rightHeld && cornerTurnSign == +1;
+        // best choices for straight / left / right
+        JunctionChoice straightBest = JunctionChoice.None;
+        float straightBestAngle = 999f;
+        Transform[] straightBranch = null;
 
-        if (correctLeft || correctRight)
+        JunctionChoice leftBest = JunctionChoice.None;
+        float leftBestAngle = 999f;
+        Transform[] leftBranch = null;
+
+        JunctionChoice rightBest = JunctionChoice.None;
+        float rightBestAngle = 999f;
+        Transform[] rightBranch = null;
+
+        // helper that records best candidates
+        void Consider(Vector3 dirWorld, JunctionChoice type, Transform[] branchArr)
         {
-            segmentIndex = cornerOutgoingIndex;
+            if (type == JunctionChoice.None) return;
+
+            dirWorld.y = 0f;
+            if (dirWorld.sqrMagnitude < 0.0001f) return;
+            dirWorld.Normalize();
+
+            float angle = Vector3.Angle(incoming, dirWorld); // 0 = straight, ~90 = turn
+
+            // best straight candidate (smallest angle)
+            if (angle < straightBestAngle)
+            {
+                straightBestAngle = angle;
+                straightBest = type;
+                if (type == JunctionChoice.Branch) straightBranch = branchArr;
+            }
+
+            int sign = GetTurnSign(incoming, dirWorld);
+            if (sign == -1 && angle < leftBestAngle)
+            {
+                leftBestAngle = angle;
+                leftBest = type;
+                if (type == JunctionChoice.Branch) leftBranch = branchArr;
+            }
+            else if (sign == +1 && angle < rightBestAngle)
+            {
+                rightBestAngle = angle;
+                rightBest = type;
+                if (type == JunctionChoice.Branch) rightBranch = branchArr;
+            }
+        }
+
+        // ----- main-track forward/backward candidates -----
+
+        // main forward (toward node mainIndex+1)
+        if (mainIndex >= 0 && mainIndex < mainNodes.Length - 1)
+        {
+            Vector3 dir = mainNodes[mainIndex + 1].position - junction.position;
+            Consider(dir, JunctionChoice.MainForward, null);
+        }
+
+        // main backward (toward node mainIndex-1)
+        if (mainIndex > 0)
+        {
+            Vector3 dir = mainNodes[mainIndex - 1].position - junction.position;
+            Consider(dir, JunctionChoice.MainBackward, null);
+        }
+
+        // ----- all branch candidates (including reconnects / loops) -----
+        foreach (var branchArr in branchCandidates)
+        {
+            if (branchArr == null || branchArr.Length == 0) continue;
+            Vector3 dir = branchArr[0].position - junction.position;
+            Consider(dir, JunctionChoice.Branch, branchArr);
+        }
+
+        // ----- pick final choice -----
+        JunctionChoice chosenType = JunctionChoice.None;
+        Transform[] chosenBranch = null;
+
+        if (leftHeld && leftBest != JunctionChoice.None)
+        {
+            chosenType = leftBest;
+            if (chosenType == JunctionChoice.Branch) chosenBranch = leftBranch;
+        }
+        else if (rightHeld && rightBest != JunctionChoice.None)
+        {
+            chosenType = rightBest;
+            if (chosenType == JunctionChoice.Branch) chosenBranch = rightBranch;
+        }
+        else
+        {
+            chosenType = straightBest;   // no turn input → go "straight"
+            if (chosenType == JunctionChoice.Branch) chosenBranch = straightBranch;
+        }
+
+        if (chosenType == JunctionChoice.None)
+            return false;
+
+        // ----- Apply chosen lane -----
+
+        if (chosenType == JunctionChoice.MainForward || chosenType == JunctionChoice.MainBackward)
+        {
+            nodes = mainNodes;
+
+            if (chosenType == JunctionChoice.MainForward)
+            {
+                segmentIndex = mainIndex;
+                travelDirection = 1;
+                distanceOnSegment = 0f;
+                UpdateSegmentData();
+            }
+            else // MainBackward
+            {
+                segmentIndex = Mathf.Max(0, mainIndex - 1);
+                travelDirection = -1;
+                UpdateSegmentData();
+                distanceOnSegment = segmentLength; // start at junction, move "backward"
+            }
+
+            transform.position = junction.position;
+
+            // clear corner state
+            atCorner = false;
+            cornerNodeIndex = -1;
+            upcomingSegmentIndex = -1;
+            cornerTurnSign = 0;
+
+            SetTargetRotation();
+            rotating = true;
+            return true;
+        }
+        else // generic branch
+        {
+            if (chosenBranch == null || chosenBranch.Length == 0)
+                return false;
+
+            Transform[] newNodes = new Transform[chosenBranch.Length + 1];
+            newNodes[0] = junction;
+            for (int i = 0; i < chosenBranch.Length; i++)
+                newNodes[i + 1] = chosenBranch[i];
+
+            nodes = newNodes;
+            segmentIndex = 0;
+            travelDirection = 1;
             distanceOnSegment = 0f;
 
-            UpdateSegmentData();
+            transform.position = junction.position;
+
+            // clear corner state
             atCorner = false;
+            cornerNodeIndex = -1;
+            upcomingSegmentIndex = -1;
+            cornerTurnSign = 0;
+
+            UpdateSegmentData();
+            SetTargetRotation();
+            rotating = true;
+            return true;
         }
     }
 
-    // ---------------- core movement along segments ----------------
 
-    void ApplyMovement()
+    Transform FindJunctionNodeAtPosition(Vector3 pos, float maxDist)
     {
-        if (Mathf.Approximately(currentSpeed, 0f))
+        Transform[] main = track.nodes;
+        float maxSqr = maxDist * maxDist;
+        int best = -1;
+        float bestSqr = maxSqr;
+
+        for (int i = 0; i < main.Length; i++)
         {
-            if (atCorner && cornerIncomingIndex >= 0 && cornerIncomingIndex < nodes.Length)
-                transform.position = nodes[cornerIncomingIndex + 1].position;
-            return;
-        }
-
-        float moveDist = currentSpeed * Time.deltaTime * travelSign;
-
-        int safety = 0;
-        while (!Mathf.Approximately(moveDist, 0f) && safety < 20)
-        {
-            safety++;
-
-            if (moveDist > 0f)   // forward along nodes[segmentIndex] -> nodes[segmentIndex+1]
+            if (main[i] == null) continue;
+            float d2 = (main[i].position - pos).sqrMagnitude;
+            if (d2 <= bestSqr)
             {
-                float remaining = segmentLength - distanceOnSegment;
-
-                if (moveDist <= remaining)
-                {
-                    distanceOnSegment += moveDist;
-                    moveDist = 0f;
-                }
-                else
-                {
-                    // we arrive at the next node
-                    distanceOnSegment = segmentLength;
-                    moveDist -= remaining;
-
-                    // node we just reached
-                    Transform cornerNode = nodes[segmentIndex + 1];
-                    Vector3 curDir = GetDirection(segmentIndex, segmentIndex + 1);
-                    bool leftHeld = Input.GetKey(KeyCode.A);
-                    bool rightHeld = Input.GetKey(KeyCode.D);
-
-                    // ---------- 1) Check for branch turn (green) ----------
-                    TrackBranch br = cornerNode.GetComponent<TrackBranch>();
-                    if (br != null && br.branchCount > 0)
-                    {
-                        Transform[] chosenBranch = null;
-                        Vector3 facing = transform.forward;   // what the player considers "forward"
-
-                        // branch 1
-                        if (br.branch1Nodes != null && br.branch1Nodes.Length > 0)
-                        {
-                            Vector3 d1 = (br.branch1Nodes[0].position - cornerNode.position).normalized;
-                            int s1 = GetCornerTurnSign(facing, d1); // -1 left, +1 right, relative to facing
-                            if ((leftHeld && s1 == -1) || (rightHeld && s1 == +1))
-                                chosenBranch = br.branch1Nodes;
-                        }
-
-                        // branch 2
-                        if (chosenBranch == null && br.branch2Nodes != null && br.branch2Nodes.Length > 0)
-                        {
-                            Vector3 d2 = (br.branch2Nodes[0].position - cornerNode.position).normalized;
-                            int s2 = GetCornerTurnSign(facing, d2);
-                            if ((leftHeld && s2 == -1) || (rightHeld && s2 == +1))
-                                chosenBranch = br.branch2Nodes;
-                        }
-
-                        if (chosenBranch != null)
-                        {
-                            // build a new nodes[] starting at this junction then along the branch
-                            Transform[] newNodes = new Transform[chosenBranch.Length + 1];
-                            newNodes[0] = cornerNode;
-                            for (int n = 0; n < chosenBranch.Length; n++)
-                                newNodes[n + 1] = chosenBranch[n];
-
-                            nodes = newNodes;
-                            segmentIndex = 0;
-                            distanceOnSegment = 0f;
-                            travelSign = 1;
-
-                            UpdateSegmentData();
-                            Vector3 newDir = GetCurrentDirection();
-                            targetRotation = Quaternion.LookRotation(newDir, Vector3.up);
-                            isRotating = true;
-
-                            // continue with leftover moveDist on the new path
-                            continue;
-                        }
-                    }
-
-                    // ---------- 2) No branch chosen – continue on main spine ----------
-
-                    if (segmentIndex < nodes.Length - 2)
-                    {
-                        // main next segment
-                        Vector3 nextDir = GetDirection(segmentIndex + 1, segmentIndex + 2);
-                        float angle = Vector3.Angle(curDir, nextDir);
-
-                        if (angle > cornerAngleThreshold)
-                        {
-                            Vector3 facing = transform.forward;
-                            int turnSign = GetCornerTurnSign(facing, nextDir);
-
-                            bool correctLeft = leftHeld && turnSign == -1;
-                            bool correctRight = rightHeld && turnSign == +1;
-
-                            if (correctLeft || correctRight)
-                            {
-                                // commit turn on main spine
-                                segmentIndex++;
-                                UpdateSegmentData();
-                                distanceOnSegment = 0f;
-
-                                targetRotation = Quaternion.LookRotation(nextDir, Vector3.up);
-                                isRotating = true;
-                            }
-                            else
-                            {
-                                // stop at the corner
-                                atCorner = true;
-                                cornerIncomingIndex = segmentIndex;
-                                cornerOutgoingIndex = segmentIndex + 1;
-                                cornerTurnSign = turnSign;
-
-                                distanceOnSegment = segmentLength;
-                                moveDist = 0f;
-                                currentSpeed = 0f;
-
-                                targetRotation = Quaternion.LookRotation(curDir, Vector3.up);
-                                isRotating = true;
-                            }
-                        }
-                        else
-                        {
-                            // almost straight → auto-continue
-                            segmentIndex++;
-                            UpdateSegmentData();
-                            distanceOnSegment = 0f;
-                        }
-                    }
-                    else
-                    {
-                        // end of current path
-                        distanceOnSegment = segmentLength;
-                        moveDist = 0f;
-                        currentSpeed = 0f;
-
-                        Vector3 lastDir = GetDirection(segmentIndex, segmentIndex + 1);
-                        targetRotation = Quaternion.LookRotation(lastDir, Vector3.up);
-                        isRotating = true;
-                    }
-                }
-            }
-            else // moveDist < 0f (backwards along current path)
-            {
-                float remaining = distanceOnSegment;
-                float step = -moveDist; // positive
-
-                if (step <= remaining)
-                {
-                    // we stay on this segment
-                    distanceOnSegment -= step;
-                    moveDist = 0f;
-                }
-                else
-                {
-                    // we want to go past the start of this segment
-                    distanceOnSegment = 0f;
-                    moveDist += remaining; // still negative
-
-                    if (segmentIndex > 0)
-                    {
-                        // just move to previous segment in this path
-                        segmentIndex--;
-                        UpdateSegmentData();
-                        distanceOnSegment = segmentLength;
-
-                        Vector3 backDir = -GetCurrentDirection();
-                        targetRotation = Quaternion.LookRotation(backDir, Vector3.up);
-                        isRotating = true;
-                    }
-                    else
-                    {
-                        // we are at the *first* segment of this path and trying to go past its start.
-                        // If this path is a branch, snap back to the main TrackBuilder nodes.
-                        Transform rootNode = nodes[0];
-
-                        bool reattachedToMain = false;
-
-                        if (track != null && track.nodes != null && nodes != track.nodes)
-                        {
-                            int mainIndex = System.Array.IndexOf(track.nodes, rootNode);
-                            if (mainIndex >= 0)
-                            {
-                                // Reattach to the main spine at this junction node.
-                                nodes = track.nodes;
-                                segmentIndex = mainIndex;
-                                UpdateSegmentData();
-
-                                // Put us exactly at the junction and stop.
-                                distanceOnSegment = 0f;
-                                transform.position = rootNode.position;
-
-                                currentSpeed = 0f;
-                                moveDist = 0f;
-                                atCorner = false;          // let normal corner logic kick in next time we move
-
-                                // Face "backwards" along the main segment we just attached to, if there is one.
-                                if (segmentIndex > 0)
-                                {
-                                    Vector3 backDir = (nodes[segmentIndex - 1].position - rootNode.position).normalized;
-                                    targetRotation = Quaternion.LookRotation(backDir, Vector3.up);
-                                    isRotating = true;
-                                }
-
-                                reattachedToMain = true;
-                            }
-                        }
-
-                        if (!reattachedToMain)
-                        {
-                            // Fallback: behave like before (dead-end, just stop).
-                            distanceOnSegment = 0f;
-                            moveDist = 0f;
-                            currentSpeed = 0f;
-
-                            Vector3 dir = -GetCurrentDirection();
-                            targetRotation = Quaternion.LookRotation(dir, Vector3.up);
-                            isRotating = true;
-                        }
-                    }
-                }
+                bestSqr = d2;
+                best = i;
             }
         }
 
-        // place player on the segment or at corner node
-        if (atCorner && cornerIncomingIndex >= 0 && cornerIncomingIndex < nodes.Length - 1)
-        {
-            transform.position = nodes[cornerIncomingIndex + 1].position;
-        }
-        else
-        {
-            Vector3 start = nodes[segmentIndex].position;
-            Vector3 dirSeg = GetCurrentDirection();
-            transform.position = start + dirSeg * distanceOnSegment;
-        }
+        if (best < 0) return null;
+        return main[best];
     }
 
-    // ---------------- rotation helper ----------------
+    // ==========================================================
+    // Corner detection for the CURRENT path
+    // ==========================================================
+
+    bool TryEnterCornerForward()
+    {
+        if (segmentIndex >= nodes.Length - 2)
+            return false;
+
+        Vector3 curDir = (nodes[segmentIndex + 1].position - nodes[segmentIndex].position).normalized;
+        Vector3 nextDir = (nodes[segmentIndex + 2].position - nodes[segmentIndex + 1].position).normalized;
+        float angle = Vector3.Angle(curDir, nextDir);
+
+        if (angle <= cornerAngleThreshold)
+            return false; // basically straight
+
+        atCorner = true;
+        cornerNodeIndex = segmentIndex + 1;
+        upcomingSegmentIndex = segmentIndex + 1; // segment [segmentIndex+1] connects node[+1]→[+2]
+
+        Vector3 facing = transform.forward;
+        cornerTurnSign = GetTurnSign(facing, nextDir);
+
+        transform.position = nodes[cornerNodeIndex].position;
+        targetRotation = transform.rotation;
+        rotating = false;
+
+        distanceOnSegment = segmentLength; // end of old segment
+
+        return true;
+    }
+
+    bool TryEnterCornerBackward()
+    {
+        if (segmentIndex <= 0)
+            return false;
+
+        Vector3 curDir = (nodes[segmentIndex].position - nodes[segmentIndex + 1].position).normalized;
+        Vector3 nextDir = (nodes[segmentIndex - 1].position - nodes[segmentIndex].position).normalized;
+        float angle = Vector3.Angle(curDir, nextDir);
+
+        if (angle <= cornerAngleThreshold)
+            return false;
+
+        atCorner = true;
+        cornerNodeIndex = segmentIndex;
+        upcomingSegmentIndex = segmentIndex - 1;
+
+        Vector3 facing = transform.forward;
+        cornerTurnSign = GetTurnSign(facing, nextDir);
+
+        transform.position = nodes[cornerNodeIndex].position;
+        targetRotation = transform.rotation;
+        rotating = false;
+
+        distanceOnSegment = 0f; // start of old segment (since we were going backward)
+
+        return true;
+    }
+
+    int GetTurnSign(Vector3 fromDir, Vector3 toDir)
+    {
+        fromDir.y = 0f;
+        toDir.y = 0f;
+        if (fromDir.sqrMagnitude < 0.0001f || toDir.sqrMagnitude < 0.0001f)
+            return 0;
+
+        fromDir.Normalize();
+        toDir.Normalize();
+        Vector3 cross = Vector3.Cross(fromDir, toDir);
+
+        if (cross.y > 0f) return +1;  // right
+        if (cross.y < 0f) return -1;  // left
+        return 0;
+    }
+
+    // --------- Basic helpers ----------
+
+    void ApplyPositionOnSegment()
+    {
+        Vector3 start = nodes[segmentIndex].position;
+        Vector3 end = nodes[segmentIndex + 1].position;
+        Vector3 dir = (end - start).normalized;
+
+        transform.position = start + dir * distanceOnSegment;
+    }
+
+    void UpdateSegmentData()
+    {
+        Vector3 start = nodes[segmentIndex].position;
+        Vector3 end = nodes[segmentIndex + 1].position;
+        segmentLength = Vector3.Distance(start, end);
+        if (segmentLength < 0.001f)
+            segmentLength = 0.001f;
+    }
+
+    void SetTargetRotation()
+    {
+        Vector3 start = nodes[segmentIndex].position;
+        Vector3 end = nodes[segmentIndex + 1].position;
+        Vector3 dir = (end - start).normalized * travelDirection;
+
+        if (dir.sqrMagnitude > 0.0001f)
+            targetRotation = Quaternion.LookRotation(dir, Vector3.up);
+    }
 
     void RotateToTarget()
     {
-        if (!isRotating) return;
+        if (!rotating) return;
 
         transform.rotation = Quaternion.RotateTowards(
             transform.rotation,
@@ -435,58 +784,120 @@ public class TrackFollower : MonoBehaviour
         if (Quaternion.Angle(transform.rotation, targetRotation) < 0.1f)
         {
             transform.rotation = targetRotation;
-            isRotating = false;
+            rotating = false;
         }
     }
 
-    // ---------------- track helpers ----------------
+    // --------- branch-end → main merge at overlapping node (fallback) ----------
 
-    void UpdateSegmentData()
+    bool TryAttachBranchEndToMain(Vector3 endPos, Vector3 incoming)
     {
-        Vector3 start = nodes[segmentIndex].position;
-        Vector3 end = nodes[segmentIndex + 1].position;
-        segmentLength = Vector3.Distance(start, end);
-        if (segmentLength < 0.0001f)
-            segmentLength = 0.0001f;
+        if (track == null || track.nodes == null)
+            return false;
 
-        Vector3 dir = (end - start).normalized * travelSign;
-        targetRotation = Quaternion.LookRotation(dir, Vector3.up);
-        isRotating = true;
+        bool leftHeld = Input.GetKey(KeyCode.A);
+        bool rightHeld = Input.GetKey(KeyCode.D);
+
+        // If no turn key is held, treat this like any other junction that
+        // needs input. (We already tried ResolveJunctionAtNode.)
+        if (!leftHeld && !rightHeld)
+            return false;
+
+        int mainIndex = FindClosestMainNodeIndex(endPos, 0.05f);
+        if (mainIndex < 0)
+            return false;
+
+        Transform[] main = track.nodes;
+
+        Vector3 desired = incoming;
+        desired.y = 0f;
+        if (desired.sqrMagnitude < 0.0001f)
+            desired = transform.forward;
+        desired.Normalize();
+
+        int bestSeg = -1;      // which segment index on main
+        int bestTravel = 1;    // +1 or -1 along that segment
+        float bestAngle = 999f;
+
+        void Consider(int segIndex, int travelSign)
+        {
+            int fromIdx = (travelSign > 0) ? segIndex : segIndex + 1;
+            int toIdx = (travelSign > 0) ? segIndex + 1 : segIndex;
+
+            Vector3 dir = main[toIdx].position - main[fromIdx].position;
+            dir.y = 0f;
+            if (dir.sqrMagnitude < 0.0001f) return;
+            dir.Normalize();
+
+            float angle = Vector3.Angle(desired, dir);
+            int sign = GetTurnSign(desired, dir);
+
+            bool wantThis =
+                (leftHeld && sign == -1) ||
+                (rightHeld && sign == +1);
+
+            if (!wantThis) return;
+
+            if (angle < bestAngle)
+            {
+                bestAngle = angle;
+                bestSeg = segIndex;
+                bestTravel = travelSign;
+            }
+        }
+
+        // Candidate: mainIndex → mainIndex+1
+        if (mainIndex < main.Length - 1)
+            Consider(mainIndex, +1);
+
+        // Candidate: mainIndex-1 → mainIndex
+        if (mainIndex > 0)
+            Consider(mainIndex - 1, -1);
+
+        if (bestSeg < 0)
+            return false;
+
+        // Switch onto that main-track segment, facing the chosen direction
+        nodes = main;
+        segmentIndex = bestSeg;
+        travelDirection = bestTravel;
+        distanceOnSegment = 0f;
+
+        // clear any stale corner info
+        atCorner = false;
+        cornerNodeIndex = -1;
+        upcomingSegmentIndex = -1;
+        cornerTurnSign = 0;
+
+        UpdateSegmentData();
+
+        int snapIdx = (travelDirection > 0) ? segmentIndex : segmentIndex + 1;
+        transform.position = main[snapIdx].position;
+
+        SetTargetRotation();
+        rotating = true;
+
+        return true;
     }
 
-    Vector3 GetCurrentDirection()
+    int FindClosestMainNodeIndex(Vector3 pos, float maxDist)
     {
-        return GetDirection(segmentIndex, segmentIndex + 1);
+        Transform[] main = track.nodes;
+        float maxSqr = maxDist * maxDist;
+        int best = -1;
+        float bestSqr = maxSqr;
+
+        for (int i = 0; i < main.Length; i++)
+        {
+            if (main[i] == null) continue;
+            float d2 = (main[i].position - pos).sqrMagnitude;
+            if (d2 <= bestSqr)
+            {
+                bestSqr = d2;
+                best = i;
+            }
+        }
+
+        return best;
     }
-
-    Vector3 GetDirection(int startIndex, int endIndex)
-    {
-        Vector3 start = nodes[startIndex].position;
-        Vector3 end = nodes[endIndex].position;
-        return (end - start).normalized;
-    }
-
-    /// <summary>
-    /// Returns -1 for a left turn, +1 for a right turn,
-    /// based on the player's facing (fromDir) toward nextDir. Y-up.
-    /// </summary>
-    int GetCornerTurnSign(Vector3 fromDir, Vector3 nextDir)
-    {
-        // Work only in XZ plane
-        fromDir.y = 0f;
-        nextDir.y = 0f;
-
-        if (fromDir.sqrMagnitude < 0.0001f || nextDir.sqrMagnitude < 0.0001f)
-            return 0;
-
-        fromDir.Normalize();
-        nextDir.Normalize();
-
-        Vector3 cross = Vector3.Cross(fromDir, nextDir);
-
-        if (cross.y > 0f) return +1;   // to the right of where I'm facing
-        if (cross.y < 0f) return -1;   // to the left
-        return 0;
-    }
-
 }

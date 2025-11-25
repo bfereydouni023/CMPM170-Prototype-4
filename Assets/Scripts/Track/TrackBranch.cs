@@ -1,11 +1,5 @@
-using UnityEngine;
+﻿using UnityEngine;
 
-/// <summary>
-/// Attach this to an individual track node (a child of TrackBuilder).
-/// It can spawn up to 2 branch tracks as child nodes,
-/// using the parent TrackBuilder's grid + spacing.
-/// Branches are visualized as green gizmo lines.
-/// </summary>
 [ExecuteAlways]
 public class TrackBranch : MonoBehaviour
 {
@@ -30,10 +24,25 @@ public class TrackBranch : MonoBehaviour
     [Tooltip("Second branch nodes (e.g., -X direction in TrackBuilder local space).")]
     public Transform[] branch2Nodes;
 
+    // ---------- NEW: make sure arrays are never "unassigned" ----------
+
+    void EnsureArrays()
+    {
+        if (branch1Nodes == null) branch1Nodes = System.Array.Empty<Transform>();
+        if (branch2Nodes == null) branch2Nodes = System.Array.Empty<Transform>();
+    }
+
+    void Awake()
+    {
+        EnsureArrays();
+    }
+
     void OnValidate()
     {
         branchNodeCount = Mathf.Max(2, branchNodeCount);
         if (branchCellsBetweenNodes < 0) branchCellsBetweenNodes = 0;
+
+        EnsureArrays();
     }
 
     // ---------- PUBLIC SNAP BUTTON ----------
@@ -52,16 +61,19 @@ public class TrackBranch : MonoBehaviour
     }
 
     [ContextMenu("Regenerate Branches")]
+    [ContextMenu("Regenerate Branches")]
     public void RegenerateBranches()
     {
         // Destroy old branch children
         DestroyBranchChildren("Branch1_");
         DestroyBranchChildren("Branch2_");
 
+        // always start from valid empty arrays
+        branch1Nodes = System.Array.Empty<Transform>();
+        branch2Nodes = System.Array.Empty<Transform>();
+
         if (branchCount <= 0)
         {
-            branch1Nodes = null;
-            branch2Nodes = null;
             return;
         }
 
@@ -81,14 +93,12 @@ public class TrackBranch : MonoBehaviour
         float spacing = cellsBetween * cellSize;
         float y = builder.gridY;
 
-        // base position is THIS NODE
-        Vector3 branchOrigin = transform.position;          // world position of the node
+        Vector3 branchOrigin = transform.position;
         Transform builderRoot = builder.transform;
-        Vector3 dirRight = builderRoot.right;               // +X in TrackBuilder space
-        Vector3 dirLeft = -builderRoot.right;              // -X in TrackBuilder space
+        Vector3 dirRight = builderRoot.right;
+        Vector3 dirLeft = -builderRoot.right;
 
-        // ---------- BRANCH 1 (e.g. +X from this node) ----------
-        branch1Nodes = null;
+        // ---------- BRANCH 1 ----------
         if (branchCount >= 1)
         {
             branch1Nodes = new Transform[branchNodeCount];
@@ -98,7 +108,7 @@ public class TrackBranch : MonoBehaviour
                 GameObject go = new GameObject($"Branch1_Node_{i}");
                 go.transform.SetParent(transform, worldPositionStays: false);
 
-                float stepIndex = i + 1; // first node is 1 * spacing away
+                float stepIndex = i + 1;
                 Vector3 worldPos = branchOrigin + dirRight * (spacing * stepIndex);
                 worldPos.y = y;
 
@@ -107,8 +117,7 @@ public class TrackBranch : MonoBehaviour
             }
         }
 
-        // ---------- BRANCH 2 (e.g. -X from this node) ----------
-        branch2Nodes = null;
+        // ---------- BRANCH 2 ----------
         if (branchCount >= 2)
         {
             branch2Nodes = new Transform[branchNodeCount];
@@ -127,7 +136,6 @@ public class TrackBranch : MonoBehaviour
             }
         }
 
-        // Snap branches to same grid as main track
         SnapBranchesToGrid(builder);
     }
 
@@ -149,7 +157,6 @@ public class TrackBranch : MonoBehaviour
         }
     }
 
-    // now public so TrackBuilder and the context menu can call it
     public void SnapBranchesToGrid(TrackBuilder builder)
     {
         float cellSize = builder.cellSize;
