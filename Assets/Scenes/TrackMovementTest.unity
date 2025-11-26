@@ -23322,6 +23322,7 @@ MonoBehaviour:
   acceleration: 10
   deceleration: 15
   rotationSpeed: 720
+  turnWindowFraction: 1
 --- !u!1001 &1667258062
 PrefabInstance:
   m_ObjectHideFlags: 0

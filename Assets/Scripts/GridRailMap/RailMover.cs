@@ -13,8 +13,13 @@ public class RailMover : MonoBehaviour
     public float minSpeed = 2f;        // minimum speed while accelerating
     public float maxSpeed = 8f;        // top speed along the rail
     public float acceleration = 10f;   // units/sec^2 toward maxSpeed
-    public float deceleration = 15f;   // units/sec^2 toward 0 when W released
+    public float deceleration = 15f;   // (currently unused, kept if you want braking later)
     public float rotationSpeed = 720f; // deg/sec for visual rotation
+
+    [Header("Turning")]
+    [Tooltip("Fraction of the segment near the next node where turn inputs are accepted while moving (0.0–1.0).")]
+    [Range(0f, 1f)]
+    public float turnWindowFraction = 0.3f;  // last 30% of the edge
 
     // Graph state
     Vector2Int currentNode;     // node we're logically "at"
@@ -61,7 +66,7 @@ public class RailMover : MonoBehaviour
         }
 
         HandleTurnInput(); // A/D/S
-        HandleMoveInput(); // W & stepping
+        HandleMoveInput(); // always moving forward
         RotateVisual();    // smooth model rotation
     }
 
@@ -69,15 +74,21 @@ public class RailMover : MonoBehaviour
 
     void HandleTurnInput()
     {
-        // If we're sliding along a segment, just queue the turn request.
+        // If we're sliding along a segment, only accept turn input
+        // in the last 'turnWindowFraction' of the segment.
         if (isStepping)
         {
-            if (Input.GetKeyDown(KeyCode.A))
-                pendingTurn = -1;   // left
-            else if (Input.GetKeyDown(KeyCode.D))
-                pendingTurn = +1;   // right
-            else if (Input.GetKeyDown(KeyCode.S))
-                pendingTurn = 2;    // turn around
+            float windowStartT = 1f - turnWindowFraction;
+
+            if (stepT >= windowStartT)
+            {
+                if (Input.GetKeyDown(KeyCode.A))
+                    pendingTurn = -1;   // left
+                else if (Input.GetKeyDown(KeyCode.D))
+                    pendingTurn = +1;   // right
+                else if (Input.GetKeyDown(KeyCode.S))
+                    pendingTurn = 2;    // turn around
+            }
 
             return;
         }
@@ -111,30 +122,26 @@ public class RailMover : MonoBehaviour
 
     void HandleMoveInput()
     {
-        bool wHeld = Input.GetKey(KeyCode.W);
+        // INFINITE-RUNNER BEHAVIOUR:
+        // No more W gating the motion. We always try to move forward.
 
         if (!isStepping)
         {
-            // If we still have some speed and there's a rail, keep coasting from this node.
-            if (currentSpeed > 0.01f && map.HasEdge(currentNode, facingDir))
+            // If there's a rail ahead, keep moving.
+            if (map.HasEdge(currentNode, facingDir))
             {
-                TryStartStep();
-            }
-            else if (wHeld)
-            {
-                // Starting from rest or near-rest
                 TryStartStep();
             }
             else
             {
-                // fully stopped on node
+                // dead end: stop completely
                 currentSpeed = 0f;
             }
         }
         else
         {
             // We're moving along an edge.
-            StepAlongEdge(wHeld);
+            StepAlongEdge();
         }
     }
 
@@ -153,12 +160,12 @@ public class RailMover : MonoBehaviour
         // Snap to exact start-of-edge position just in case
         transform.position = map.NodeToWorld(currentNode);
 
-        // If starting from rest due to new input, kick up to at least minSpeed
+        // If starting from rest, kick up to at least minSpeed
         if (currentSpeed < 0.01f)
             currentSpeed = minSpeed;
     }
 
-    void StepAlongEdge(bool wHeld)
+    void StepAlongEdge()
     {
         Vector3 from = map.NodeToWorld(currentNode);
         Vector3 to = map.NodeToWorld(targetNode);
@@ -171,22 +178,14 @@ public class RailMover : MonoBehaviour
             return;
         }
 
-        // --- speed update (accel vs decel) ---
-        float targetSpeed = wHeld ? maxSpeed : 0f;
-        float rate = wHeld ? acceleration : deceleration;
+        // --- always accelerate toward maxSpeed ---
+        currentSpeed = Mathf.MoveTowards(currentSpeed, maxSpeed, acceleration * Time.deltaTime);
 
-        currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, rate * Time.deltaTime);
-
-        // While actively moving (W held), enforce a minSpeed floor
-        if (wHeld && currentSpeed < minSpeed)
+        // enforce min/max while running
+        if (currentSpeed < minSpeed)
             currentSpeed = minSpeed;
-
-        // If we've decelerated to (almost) zero, stop sliding further
-        if (currentSpeed <= 0.01f && !wHeld)
-        {
-            currentSpeed = 0f;
-            return;
-        }
+        if (currentSpeed > maxSpeed)
+            currentSpeed = maxSpeed;
 
         // Convert world speed to 0..1 along the segment
         float deltaT = (currentSpeed * Time.deltaTime) / segmentLength;
@@ -207,14 +206,13 @@ public class RailMover : MonoBehaviour
             // Apply any queued turn now that we're exactly at the node
             ApplyPendingTurnAtNode();
 
-            // If we still have speed (either from W or coasting) and there's a rail, keep going
-            if (currentSpeed > 0.01f && map.HasEdge(currentNode, facingDir))
+            // If there's a rail ahead, keep running; otherwise stop here.
+            if (map.HasEdge(currentNode, facingDir))
             {
                 TryStartStep();
             }
             else
             {
-                // No more forward motion / dead end
                 currentSpeed = 0f;
             }
         }

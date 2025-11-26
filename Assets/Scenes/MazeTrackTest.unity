@@ -55179,10 +55179,11 @@ MonoBehaviour:
   startNode: {x: 0, y: 0}
   startDirection: {x: 0, y: 1}
   minSpeed: 2
-  maxSpeed: 8
+  maxSpeed: 15
   acceleration: 12
   deceleration: 15
   rotationSpeed: 720
+  turnWindowFraction: 0.832
 --- !u!1 &1666347912
 GameObject:
   m_ObjectHideFlags: 0
