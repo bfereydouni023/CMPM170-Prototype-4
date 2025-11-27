@@ -15,11 +15,38 @@ public class RailMover : MonoBehaviour
     public float acceleration = 10f;   // units/sec^2 toward maxSpeed
     public float deceleration = 15f;   // (currently unused, kept if you want braking later)
     public float rotationSpeed = 720f; // deg/sec for visual rotation
+    public float CurrentSpeedAbs => Mathf.Abs(currentSpeed);
 
     [Header("Turning")]
     [Tooltip("Fraction of the segment near the next node where turn inputs are accepted while moving (0.0–1.0).")]
     [Range(0f, 1f)]
     public float turnWindowFraction = 0.3f;  // last 30% of the edge
+    
+    [Header("Ramp Up")]
+    public KeyCode rampKey = KeyCode.Space;
+    public float boostedMaxSpeed = 14f;   
+    public float rampExtraAcceleration = 15f;
+
+
+    [Header("Slowdown")]
+    public float slowdownDuration = 0.8f;
+
+    // If <= 0, we’ll fall back to minSpeed
+    [Tooltip("Speed to converge to during slowdown. If <= 0, uses minSpeed.")]
+    public float slowdownTargetSpeed = 0f;
+
+    bool slowdownActive = false;
+    float slowdownTimer = 0f;
+
+
+    [Header("Camera & FX")]
+    public Camera playerCamera;
+    public float baseFOV = 60f;
+    public float rampFOVGain = 15f;         
+    public float slowdownFOV = 50f; 
+    public float fovLerpSpeed = 10f;
+
+    bool isRamping = false;
 
     // Graph state
     Vector2Int currentNode;     // node we're logically "at"
@@ -55,6 +82,9 @@ public class RailMover : MonoBehaviour
         stepT = 0f;
         pendingTurn = 0;
         currentSpeed = 0f;
+
+        if (playerCamera == null) playerCamera = Camera.main;
+        if (playerCamera != null) baseFOV = playerCamera.fieldOfView;
     }
 
     void Update()
@@ -68,6 +98,9 @@ public class RailMover : MonoBehaviour
         HandleTurnInput(); // A/D/S
         HandleMoveInput(); // always moving forward
         RotateVisual();    // smooth model rotation
+
+        HandleRampAndSlowdown();
+        UpdateCameraEffects();
     }
 
     // ---------------- INPUT ----------------
@@ -168,45 +201,56 @@ public class RailMover : MonoBehaviour
     void StepAlongEdge()
     {
         Vector3 from = map.NodeToWorld(currentNode);
-        Vector3 to = map.NodeToWorld(targetNode);
+        Vector3 to   = map.NodeToWorld(targetNode);
 
         float segmentLength = Vector3.Distance(from, to);
         if (segmentLength < 0.0001f)
         {
-            // Degenerate, just snap to target node
             CompleteStep();
             return;
         }
 
-        // --- always accelerate toward maxSpeed ---
-        currentSpeed = Mathf.MoveTowards(currentSpeed, maxSpeed, acceleration * Time.deltaTime);
+        bool effectiveIsRamping = isRamping && !slowdownActive;
 
-        // enforce min/max while running
+        float targetMaxSpeed;
+
+        if (slowdownActive)
+        {
+            // if custom slowdown not set use mindspeed
+            float desiredSlowSpeed = (slowdownTargetSpeed > 0f) ? slowdownTargetSpeed : minSpeed;
+            targetMaxSpeed = desiredSlowSpeed;
+        }
+        else if (effectiveIsRamping)
+        {
+            targetMaxSpeed = boostedMaxSpeed;
+        }
+        else
+        {
+            targetMaxSpeed = maxSpeed;
+        }
+
+        float accel = effectiveIsRamping ? (acceleration + rampExtraAcceleration)
+                                        : acceleration;
+
+        currentSpeed = Mathf.MoveTowards(currentSpeed, targetMaxSpeed, accel * Time.deltaTime);
+
         if (currentSpeed < minSpeed)
             currentSpeed = minSpeed;
-        if (currentSpeed > maxSpeed)
-            currentSpeed = maxSpeed;
+        if (currentSpeed > targetMaxSpeed)
+            currentSpeed = targetMaxSpeed;
 
-        // Convert world speed to 0..1 along the segment
         float deltaT = (currentSpeed * Time.deltaTime) / segmentLength;
         stepT += deltaT;
         if (stepT >= 1f)
-        {
             stepT = 1f;
-        }
 
-        Vector3 pos = Vector3.Lerp(from, to, stepT);
-        transform.position = pos;
+        transform.position = Vector3.Lerp(from, to, stepT);
 
-        // When we reach the target node, decide whether to continue
         if (stepT >= 1f - Mathf.Epsilon)
         {
             CompleteStep();
-
-            // Apply any queued turn now that we're exactly at the node
             ApplyPendingTurnAtNode();
 
-            // If there's a rail ahead, keep running; otherwise stop here.
             if (map.HasEdge(currentNode, facingDir))
             {
                 TryStartStep();
@@ -217,6 +261,8 @@ public class RailMover : MonoBehaviour
             }
         }
     }
+
+
 
     void CompleteStep()
     {
@@ -300,4 +346,64 @@ public class RailMover : MonoBehaviour
         if (dir == Vector2Int.left) return Vector2Int.up;
         return dir;
     }
+
+    void HandleRampAndSlowdown()
+    {
+        // Slowdown timer
+        if (slowdownActive)
+        {
+            slowdownTimer -= Time.deltaTime;
+            if (slowdownTimer <= 0f)
+            {
+                slowdownActive = false;
+            }
+        }
+
+        // Player can only ramp if not currently in slowdown
+        if (!slowdownActive && Input.GetKey(rampKey))
+        {
+            isRamping = true;
+        }
+        else
+        {
+            isRamping = false;
+        }
+    }
+
+
+    void UpdateCameraEffects()
+    {
+        if (playerCamera == null) return;
+
+        float targetFOV = baseFOV;
+
+        if (slowdownActive)
+        {
+            targetFOV = slowdownFOV;
+        }
+        else if (isRamping)
+        {
+            // widen FOV based on how fast we’re going vs boosted top speed
+            float t = Mathf.InverseLerp(minSpeed, boostedMaxSpeed, currentSpeed);
+            targetFOV = Mathf.Lerp(baseFOV, baseFOV + rampFOVGain, t);
+        }
+
+        playerCamera.fieldOfView = Mathf.Lerp(
+            playerCamera.fieldOfView,
+            targetFOV,
+            fovLerpSpeed * Time.deltaTime
+        );
+    }
+
+    public void TriggerSlowdown(float duration, float targetSpeedOverride = -1f)
+    {
+        slowdownActive = true;
+        slowdownTimer = duration;
+
+        if (targetSpeedOverride > 0f)
+            slowdownTargetSpeed = targetSpeedOverride;
+
+        isRamping = false; // cancel ramp if they were charging
+    }
+
 }

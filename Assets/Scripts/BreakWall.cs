@@ -18,6 +18,15 @@ public class SimpleBreakableWall : MonoBehaviour
     public AudioClip breakSound;
     /* orb cost to destroy wall */
     public float orbcost = 0;
+    public float requiredSpeed = 6f;     
+    [Header("Slowdown After Break")]
+    public float slowdownDuration = 0.8f;
+
+    // 0 = barely slow them, 1 = slow nearly to minSpeed
+    [Range(0f, 1f)]
+    public float slowdownStrength = 0.5f;
+
+
     /**
         references OrbData to get number of orbs collected. 
         If higher than or equal to orbcost of wall, player can break
@@ -45,13 +54,11 @@ public class SimpleBreakableWall : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (hasBroken) {
+        if (hasBroken)
             return;
-             }
-        if (!other.CompareTag("Player")) 
-            {
+
+        if (!other.CompareTag("Player"))
             return;
-            }
 
         if (orbcost > NumOrbs)
         {
@@ -59,26 +66,49 @@ public class SimpleBreakableWall : MonoBehaviour
             return;
         }
 
-        GridMover mover = other.GetComponent<GridMover>();
         float speed = 0f;
+        RailMover railMover = other.GetComponent<RailMover>();
 
-        if (mover != null)
+        if (railMover != null)
         {
-            /* taken from Gridmover (absolute) */
-            speed = mover.CurrentSpeedAbs;
+            speed = railMover.CurrentSpeedAbs;
+        }
+        else
+        {
+            GridMover oldMover = other.GetComponent<GridMover>();
+            if (oldMover != null)
+            {
+                speed = oldMover.CurrentSpeedAbs;
+            }
+        }
+
+        if (speed < requiredSpeed)
+        {
+            return;
         }
 
         float clampedSpeed = Mathf.Clamp(speed, 0f, maxRecordedSpeed);
-
         float t = (maxRecordedSpeed > 0f) ? (clampedSpeed / maxRecordedSpeed) : 0f;
-
-        /* computes explosion force based off of player speed */
         float explosionForce = Mathf.Lerp(minExplosionForce, maxExplosionForce, t);
 
         Vector3 explosionPoint = other.transform.position;
 
         DeductOrbs();
         Break(explosionForce, explosionPoint);
+
+        // Trigger slowdown on the mover after breaking
+        if (railMover != null)
+        {
+            // Compute a target speed between maxSpeed and minSpeed based on strength
+            float targetSpeed = Mathf.Lerp(
+                railMover.maxSpeed,   // 0 => stay closer to max speed
+                railMover.minSpeed,   // 1 => drop near min speed
+                slowdownStrength
+            );
+
+            railMover.TriggerSlowdown(slowdownDuration, targetSpeed);
+        }
+
     }
 
     void Break(float explosionForce, Vector3 explosionPoint)

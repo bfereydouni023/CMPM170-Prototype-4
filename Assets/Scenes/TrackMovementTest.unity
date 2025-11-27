@@ -685,6 +685,18 @@ PrefabInstance:
       propertyPath: orbcost
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 9097607130772555024, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_LocalScale.x
       value: 11.6211
@@ -1746,6 +1758,18 @@ PrefabInstance:
       propertyPath: orbcost
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 9133984102475887601, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_Name
       value: BreakableWall1 (10)
@@ -2180,6 +2204,18 @@ PrefabInstance:
     - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: orbcost
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 9133984102475887601, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_Name
@@ -2763,6 +2799,18 @@ PrefabInstance:
       propertyPath: orbcost
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 9097607130772555024, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_LocalScale.x
       value: 11.6211
@@ -2847,6 +2895,18 @@ PrefabInstance:
     - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: orbcost
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 9133984102475887601, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_Name
@@ -3282,6 +3342,18 @@ PrefabInstance:
     - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: orbcost
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 9133984102475887601, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_Name
@@ -4255,6 +4327,18 @@ PrefabInstance:
       propertyPath: orbcost
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 9133984102475887601, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_Name
       value: BreakableWall1 (9)
@@ -4750,6 +4834,18 @@ PrefabInstance:
     - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: orbcost
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 9133984102475887601, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_Name
@@ -6379,6 +6475,18 @@ PrefabInstance:
       propertyPath: orbcost
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 9133984102475887601, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_Name
       value: BreakableWall1 (8)
@@ -7932,6 +8040,18 @@ PrefabInstance:
       propertyPath: orbcost
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 9097607130772555024, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_LocalScale.x
       value: 11.6211
@@ -8681,6 +8801,18 @@ PrefabInstance:
       propertyPath: orbcost
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 9133984102475887601, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_Name
       value: BreakableWall1 (19)
@@ -9373,6 +9505,18 @@ PrefabInstance:
     - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: orbcost
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 9133984102475887601, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_Name
@@ -13061,6 +13205,18 @@ PrefabInstance:
       propertyPath: orbcost
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 9133984102475887601, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_Name
       value: BreakableWall1 (13)
@@ -13212,6 +13368,18 @@ PrefabInstance:
     - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: orbcost
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 9133984102475887601, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_Name
@@ -13660,6 +13828,18 @@ PrefabInstance:
     - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: orbcost
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 9097607130772555024, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_LocalScale.x
@@ -14231,6 +14411,18 @@ PrefabInstance:
       propertyPath: orbcost
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 9097607130772555024, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_LocalScale.x
       value: 11.6211
@@ -14777,6 +14969,18 @@ PrefabInstance:
       propertyPath: orbcost
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 9097607130772555024, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_LocalScale.x
       value: 11.6211
@@ -15210,6 +15414,18 @@ PrefabInstance:
     - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: orbcost
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 9097607130772555024, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_LocalScale.x
@@ -15730,6 +15946,18 @@ PrefabInstance:
     - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: orbcost
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 9133984102475887601, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_Name
@@ -16368,6 +16596,18 @@ PrefabInstance:
       propertyPath: orbcost
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 9097607130772555024, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_LocalScale.x
       value: 11.6211
@@ -16543,6 +16783,18 @@ PrefabInstance:
     - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: orbcost
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 9097607130772555024, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_LocalScale.x
@@ -17719,6 +17971,18 @@ PrefabInstance:
       propertyPath: orbcost
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 9133984102475887601, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_Name
       value: BreakableWall1 (11)
@@ -18042,6 +18306,18 @@ PrefabInstance:
     - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: orbcost
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 9133984102475887601, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_Name
@@ -19579,6 +19855,18 @@ PrefabInstance:
     - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: orbcost
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 9133984102475887601, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_Name
@@ -22923,6 +23211,18 @@ PrefabInstance:
       propertyPath: orbcost
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 9097607130772555024, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_LocalScale.x
       value: 11.6211
@@ -23323,6 +23623,16 @@ MonoBehaviour:
   deceleration: 15
   rotationSpeed: 720
   turnWindowFraction: 1
+  rampKey: 32
+  boostedMaxSpeed: 30
+  rampExtraAcceleration: 15
+  slowdownDuration: 0
+  slowdownTargetSpeed: 0
+  playerCamera: {fileID: 1593476281}
+  baseFOV: 60
+  rampFOVGain: 15
+  slowdownFOV: 40
+  fovLerpSpeed: 10
 --- !u!1001 &1667258062
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -24260,6 +24570,18 @@ PrefabInstance:
       propertyPath: orbcost
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 9097607130772555024, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_LocalScale.x
       value: 11.6211
@@ -24526,6 +24848,18 @@ PrefabInstance:
     - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: orbcost
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 9097607130772555024, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_LocalScale.x
@@ -24924,6 +25258,18 @@ PrefabInstance:
     - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: orbcost
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 9133984102475887601, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_Name
@@ -27346,6 +27692,18 @@ PrefabInstance:
       propertyPath: orbcost
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 9097607130772555024, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_LocalScale.x
       value: 11.6211
@@ -27608,6 +27966,18 @@ PrefabInstance:
       propertyPath: orbcost
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 9133984102475887601, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_Name
       value: BreakableWall1 (2)
@@ -27673,6 +28043,18 @@ PrefabInstance:
     - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: orbcost
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 9133984102475887601, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_Name
@@ -29960,6 +30342,18 @@ PrefabInstance:
       propertyPath: orbcost
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 9133984102475887601, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_Name
       value: BreakableWall1 (1)
@@ -30106,6 +30500,18 @@ PrefabInstance:
     - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: orbcost
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: requiredSpeed
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownDuration
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095634626784205276, guid: 5f322d1df2757a145a65178163778cee, type: 3}
+      propertyPath: slowdownStrength
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 9133984102475887601, guid: 5f322d1df2757a145a65178163778cee, type: 3}
       propertyPath: m_Name
