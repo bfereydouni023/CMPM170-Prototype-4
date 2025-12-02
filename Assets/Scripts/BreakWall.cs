@@ -4,10 +4,10 @@ using System.Collections;
 public class SimpleBreakableWall : MonoBehaviour
 {
     [SerializeField] private OrbData orbData;
-   /* wall objects */
+
+    /* wall objects */
     public GameObject intactWall;
     public GameObject brokenWall;
-
 
     /* explosion vars */
     public float maxRecordedSpeed = 2f;
@@ -16,15 +16,14 @@ public class SimpleBreakableWall : MonoBehaviour
     public float explosionRadius = 5f;
     public float upwardsModifier = 0.5f;
     public float debrisLifetime = 5f;
-    public AudioClip breakSound;
+
     /* orb cost to destroy wall */
     public float orbcost = 0;
     public float requiredSpeed = 6f;
     
     [Header("Bounce Settings")]
     public float bounceForce = 10f;
-    public AudioClip bounceSound;
-    
+
     [Header("Slowdown After Break")]
     public float slowdownDuration = 0.8f;
 
@@ -32,6 +31,10 @@ public class SimpleBreakableWall : MonoBehaviour
     [Range(0f, 1f)]
     public float slowdownStrength = 0.5f;
 
+    [Header("Audio")]
+    // Assign these in the Inspector
+    public AudioSource breakAudioSource;   // plays when wall breaks
+    public AudioSource bounceAudioSource;  // plays when player bounces off
 
     /**
         references OrbData to get number of orbs collected. 
@@ -45,7 +48,6 @@ public class SimpleBreakableWall : MonoBehaviour
     private float bounceCooldown = 0.5f;
     private GameObject lastBouncedPlayer = null;
 
-    private AudioSource _breakSoundSource;
     private Collider wallCollider;
 
     void Awake()
@@ -57,14 +59,6 @@ public class SimpleBreakableWall : MonoBehaviour
         
         // Cache the collider
         wallCollider = GetComponent<Collider>();
-    }
-
-    void Start()
-    {
-        _breakSoundSource = gameObject.AddComponent<AudioSource>();
-        _breakSoundSource.playOnAwake = false;
-        _breakSoundSource.loop = false;
-        _breakSoundSource.spatialBlend = 1f;
     }
 
     void OnTriggerEnter(Collider other)
@@ -84,6 +78,7 @@ public class SimpleBreakableWall : MonoBehaviour
         float speed = 0f;
         RailMover railMover = other.GetComponent<RailMover>();
 
+        // Not enough orbs → bounce
         if (orbcost > NumOrbs)
         {
             Debug.Log($"Not enough orbs to break this wall. Bouncing back! (Orbs: {NumOrbs}, Required: {orbcost})");
@@ -93,15 +88,18 @@ public class SimpleBreakableWall : MonoBehaviour
             lastBouncedPlayer = other.gameObject;
             
             // Trigger bounce: reverses direction and boosts speed for dramatic bounce-back
-            railMover.TriggerBounce(bounceForce * 0.1f, 2.0f);
+            if (railMover != null)
+            {
+                railMover.TriggerBounce(bounceForce * 0.1f, 2.0f);
+            }
             
             // Temporarily disable trigger to prevent immediate re-trigger
             StartCoroutine(DisableTriggerTemporarily(0.3f));
             
             // Play bounce sound if available
-            if (bounceSound != null)
+            if (bounceAudioSource != null)
             {
-                _breakSoundSource.PlayOneShot(bounceSound);
+                bounceAudioSource.Play();
             }
             
             return;
@@ -113,6 +111,7 @@ public class SimpleBreakableWall : MonoBehaviour
             speed = railMover.CurrentSpeedAbs;
         }
 
+        // Too slow → bounce
         if (speed < requiredSpeed)
         {
             Debug.Log($"Speed too low to break wall. Bouncing back! (Speed: {speed}, Required: {requiredSpeed})");
@@ -122,15 +121,18 @@ public class SimpleBreakableWall : MonoBehaviour
             lastBouncedPlayer = other.gameObject;
             
             // Trigger bounce: reverses direction and boosts speed for dramatic bounce-back
-            railMover.TriggerBounce(bounceForce * 0.1f, 2.0f);
+            if (railMover != null)
+            {
+                railMover.TriggerBounce(bounceForce * 0.1f, 2.0f);
+            }
             
             // Temporarily disable trigger to prevent immediate re-trigger
             StartCoroutine(DisableTriggerTemporarily(0.3f));
             
             // Play bounce sound if available
-            if (bounceSound != null)
+            if (bounceAudioSource != null)
             {
-                _breakSoundSource.PlayOneShot(bounceSound);
+                bounceAudioSource.Play();
             }
             
             return;
@@ -163,7 +165,7 @@ public class SimpleBreakableWall : MonoBehaviour
     void Break(float explosionForce, Vector3 explosionPoint)
     {
         hasBroken = true;
-        Debug.Log($"WALL BROKE!");
+        Debug.Log("WALL BROKE!");
 
         if (intactWall != null)
             intactWall.SetActive(false);
@@ -171,7 +173,10 @@ public class SimpleBreakableWall : MonoBehaviour
         if (brokenWall != null)
             brokenWall.SetActive(true);
 
-        _breakSoundSource.PlayOneShot(breakSound);
+        if (breakAudioSource != null)
+        {
+            breakAudioSource.Play();
+        }
 
         Rigidbody[] pieces = brokenWall.GetComponentsInChildren<Rigidbody>();
         foreach (Rigidbody rb in pieces)
@@ -183,7 +188,6 @@ public class SimpleBreakableWall : MonoBehaviour
                 upwardsModifier,
                 ForceMode.Impulse
             );
-
         }
     }
 

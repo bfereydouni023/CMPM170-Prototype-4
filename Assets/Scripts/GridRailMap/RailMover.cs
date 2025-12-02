@@ -47,6 +47,13 @@ public class RailMover : MonoBehaviour
     public float slowdownFOV = 50f; 
     public float fovLerpSpeed = 10f;
 
+    [Header("Audio")]
+    public AudioSource rampAudioSource;
+    public AudioSource slowdownAudioSource;
+    public AudioSource turnAudioSource;
+
+    bool wasRampingLastFrame = false;
+    bool wasSlowdownLastFrame = false;
     bool isRamping = false;
 
     // Graph state
@@ -101,6 +108,8 @@ public class RailMover : MonoBehaviour
         RotateVisual();    // smooth model rotation
 
         HandleRampAndSlowdown();
+        UpdateRampSound();
+        UpdateSlowdownSound();
         UpdateCameraEffects();
     }
 
@@ -151,6 +160,7 @@ public class RailMover : MonoBehaviour
         if (wantTurn && map.HasEdge(currentNode, newDir))
         {
             facingDir = newDir;
+            PlayTurnSound(); 
         }
     }
 
@@ -291,6 +301,7 @@ public class RailMover : MonoBehaviour
         if (map.HasEdge(currentNode, newDir))
         {
             facingDir = newDir;
+            PlayTurnSound(); 
         }
 
         pendingTurn = 0; // clear queued input
@@ -433,4 +444,60 @@ public class RailMover : MonoBehaviour
         }
     }
 
+    void UpdateRampSound()
+    {
+        if (rampAudioSource == null)
+            return;
+
+        bool shouldBeRampingSound = isRamping && !slowdownActive && isStepping;
+
+        // Transition: OFF -> ON
+        if (shouldBeRampingSound && !wasRampingLastFrame)
+        {
+            if (!rampAudioSource.isPlaying)
+                rampAudioSource.Play();
+        }
+        // Transition: ON -> OFF
+        else if (!shouldBeRampingSound && wasRampingLastFrame)
+        {
+            if (rampAudioSource.isPlaying)
+                rampAudioSource.Stop();
+        }
+
+        wasRampingLastFrame = shouldBeRampingSound;
+    }
+
+    void UpdateSlowdownSound()
+    {
+        if (slowdownAudioSource == null)
+            return;
+
+        bool shouldBeSlowdownSound = slowdownActive && isStepping;
+
+        // OFF -> ON
+        if (shouldBeSlowdownSound && !wasSlowdownLastFrame)
+        {
+            if (!slowdownAudioSource.isPlaying)
+                slowdownAudioSource.Play();
+        }
+        // ON -> OFF
+        else if (!shouldBeSlowdownSound && wasSlowdownLastFrame)
+        {
+            if (slowdownAudioSource.isPlaying)
+                slowdownAudioSource.Stop();
+        }
+
+        wasSlowdownLastFrame = shouldBeSlowdownSound;
+    }
+
+    // ---------------- TURN AUDIO ----------------
+
+    void PlayTurnSound()
+    {
+        if (turnAudioSource == null)
+            return;
+
+        turnAudioSource.Stop();
+        turnAudioSource.Play();
+    }
 }
