@@ -1,12 +1,14 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class WallCounterUI : MonoBehaviour
 {
-    private static bool hasSpawned;
+    private static WallCounterUI instance;
 
     [SerializeField] private TextMeshProUGUI counterText;
+    private Canvas rootCanvas;
 
     private int totalWalls;
     private int brokenWalls;
@@ -14,35 +16,46 @@ public class WallCounterUI : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void CreateCounter()
     {
-        if (hasSpawned || FindObjectOfType<WallCounterUI>() != null)
+        if (instance != null || FindObjectOfType<WallCounterUI>() != null)
         {
             return;
         }
 
         var go = new GameObject("WallCounter");
-        go.AddComponent<WallCounterUI>();
-        hasSpawned = true;
+        instance = go.AddComponent<WallCounterUI>();
+        DontDestroyOnLoad(go);
     }
 
     private void Awake()
     {
+        if (instance != null && instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        instance = this;
+        DontDestroyOnLoad(gameObject);
         EnsureUI();
     }
 
     private void OnEnable()
     {
         SimpleBreakableWall.WallBroken += HandleWallBroken;
+        SceneManager.sceneLoaded += HandleSceneLoaded;
     }
 
     private void Start()
     {
         CountExistingWalls();
         UpdateCounter();
+        ApplyVisibilityForScene();
     }
 
     private void OnDisable()
     {
         SimpleBreakableWall.WallBroken -= HandleWallBroken;
+        SceneManager.sceneLoaded -= HandleSceneLoaded;
     }
 
     private void EnsureUI()
@@ -54,10 +67,10 @@ public class WallCounterUI : MonoBehaviour
 
         // Create a lightweight overlay canvas and text element if none are assigned.
         var canvasGO = new GameObject("WallCounterCanvas");
-        var canvas = canvasGO.AddComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        rootCanvas = canvasGO.AddComponent<Canvas>();
+        rootCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
 
-        var scaler = canvasGO.AddComponent<CanvasScaler>();
+        var scaler = rootCanvas.gameObject.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920, 1080);
 
@@ -97,6 +110,14 @@ public class WallCounterUI : MonoBehaviour
     {
         brokenWalls++;
         UpdateCounter();
+        ApplyVisibilityForScene();
+    }
+
+    private void HandleSceneLoaded(Scene _, LoadSceneMode __)
+    {
+        CountExistingWalls();
+        UpdateCounter();
+        ApplyVisibilityForScene();
     }
 
     private void UpdateCounter()
@@ -107,5 +128,18 @@ public class WallCounterUI : MonoBehaviour
         }
 
         counterText.text = $"Walls Broken: {brokenWalls}/{totalWalls}";
+    }
+
+    private void ApplyVisibilityForScene()
+    {
+        if (rootCanvas == null)
+        {
+            rootCanvas = GetComponentInChildren<Canvas>();
+        }
+
+        if (rootCanvas != null)
+        {
+            rootCanvas.gameObject.SetActive(totalWalls > 0);
+        }
     }
 }
