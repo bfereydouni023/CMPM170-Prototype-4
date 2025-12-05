@@ -13,7 +13,6 @@ public class Orb : MonoBehaviour
 
     [Header("References")]
     public GameObject player;
-    public AudioSource pickupAudioSource;
     private Vector3 startPos;   // store original spawn position
 
     void Start()
@@ -44,10 +43,6 @@ public class Orb : MonoBehaviour
     {
         if (collision.gameObject == player && orbData != null)
         {
-            if (pickupAudioSource != null)
-            {
-                pickupAudioSource.Play();
-            }
 
             // use the AddOrb function instead of touching OrbCount directly
             orbData.AddOrb(1);
