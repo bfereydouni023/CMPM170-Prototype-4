@@ -3,6 +3,8 @@ using System.Collections;
 
 public class SimpleBreakableWall : MonoBehaviour
 {
+    public static event System.Action<SimpleBreakableWall> WallBroken;
+
     [SerializeField] private OrbData orbData;
     [SerializeField] private LossData LossData;
 
@@ -50,6 +52,7 @@ public class SimpleBreakableWall : MonoBehaviour
      **/
     private float NumOrbs => orbData != null ? orbData.OrbCount : 0f;
     bool hasBroken = false;
+    public bool HasBroken => hasBroken;
     
     // Bounce cooldown to prevent repeated triggering
     private float lastBounceTime = -999f;
@@ -211,6 +214,8 @@ public class SimpleBreakableWall : MonoBehaviour
 
         if (brokenWall != null)
             brokenWall.SetActive(true);
+
+        WallBroken?.Invoke(this);
 
         if (breakAudioSource != null)
         {
